@@ -1,0 +1,113 @@
+html, body {
+	height: 100%;
+	font-size: 12px;
+	margin: 0;
+	color: #283848;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+html {
+	overflow-y: hidden;
+}
+
+body {
+	overflow-y: auto;
+}
+
+header {
+	width: 100%;
+	background: #283848;
+	color: white;
+	padding: 1px 0;
+	margin-bottom: 48px;
+}
+
+h1 {
+	font-size: 18px;
+	padding: 1px 48px ;
+}
+
+.content {
+	margin: 0 auto;
+	width: 720px;
+}
+
+article {
+
+}
+
+h2 {
+	font-size: 30px;
+}
+
+p {
+	margin: 0 0 10px;
+	line-height: 1.4;
+}
+
+main {
+	font-size: 18px;
+	display: flex;
+	justify-content: center;
+	align-items: baseline;
+	background: #eaf4f4;
+	padding: 20px 48px;
+	border-radius: 12px;
+	margin-top: 40px;
+	margin-botoom: 30px;
+}
+
+button {
+	background: #f79d04;
+	padding: 10px 16px;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+button:hover {
+	opacity: 0.8;
+}
+
+span {
+	padding: 0 20px;
+	font-size: 14px;
+}
+
+.article-group {
+	display: flex;
+}
+
+.article-group > * {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+footer {
+	border-top: 4px solid #eaf4f4;
+	border-radius: 2px;
+	text-align: center;
+	padding: 15px;
+	margin-top: 24px;
+}
+
+#area-editor {
+	display: none;
+}
+
+.area-table table{
+	width: 100%;
+}
+
+button#add-area {
+	display: block;
+	margin-left: auto;
+	padding: 5px 8px;
+    font-size: 10px;
+}
+
+button#show-code {
+	display: block;
+	margin: 20px auto;
+}
