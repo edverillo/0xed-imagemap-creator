@@ -54,16 +54,21 @@ main {
 	padding: 20px 48px;
 	border-radius: 12px;
 	margin-top: 40px;
-	margin-botoom: 30px;
+	margin-bottom: 30px;
 }
 
-button {
+#from-PC--input {
+	display: none;
+}
+
+#from-PC--label, button {
 	background: #f79d04;
 	padding: 10px 16px;
 	color: white;
 	border: none;
 	border-radius: 6px;
 	cursor: pointer;
+	font-size: 16px;
 }
 
 button:hover {
@@ -94,9 +99,22 @@ footer {
 
 #area-editor {
 	display: none;
+	flex-direction: column;
 }
 
-.area-table table{
+#area-editor.--shown {
+	display: flex;
+}
+
+.canvas {
+	margin: 0 auto;
+}
+
+#area-table {
+	margin-top: 15px;
+}
+
+#area-table table{
 	width: 100%;
 }
 
@@ -105,9 +123,80 @@ button#add-area {
 	margin-left: auto;
 	padding: 5px 8px;
     font-size: 10px;
+	background: #02b516;
+	width: 85px;
+}
+
+button.remove-area {
+	display: block;
+	margin-left: auto;
+	padding: 5px 8px;
+    font-size: 10px;
+	background: #ff3c00;
+	width: 85px;
 }
 
 button#show-code {
 	display: block;
 	margin: 20px auto;
+}
+
+.modal--dim {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: rgba(50, 50, 50, 0.3);
+	backdrop-filter: blur(5px) sepia(30%);
+}
+
+.modal--window {
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	width: 800px;
+	margin: 0 auto;
+	top: 150px;
+	left: 50%;
+	transform: translateX(-50%);
+	background:#eaf4f4;
+	border-radius: 10px;
+	box-shadow: black 2px 3px 12px;
+}
+
+.modal--header {
+	font-size: 16px;
+	padding: 14px;
+	border-bottom: 1px solid gray;
+}
+
+.modal--content input{
+	width: calc(100% - 32px);
+	box-sizing: border-box;
+	margin: 16px;
+	font-size: 16px;
+	padding: 8px;
+}
+
+.modal--footer {
+	display: flex;
+	justify-content: flex-end;
+	padding: 14px;
+}
+
+.modal--button {
+	margin-left: 5px;
+}
+
+.modal--button.--primary {
+
+}
+
+.code-output {
+	margin: 15px;
+	padding: 25px;
+	background: lightgray;
+	font-size: 14px;
+	overflow: scroll;
 }

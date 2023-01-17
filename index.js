@@ -1,4 +1,12 @@
+let useState = React.useState
+
 let $ = (component) => (...args) => React.createElement(component, ...args)
+
+let prop = propName => obj => obj[propName]
+
+let $reactPortal = $(({ children, wrapperId }) => {
+    return ReactDOM.createPortal(children, document.getElementById(wrapperId));
+})
 
 let createTags = (...tags) => {
     let result = {}
@@ -9,8 +17,8 @@ let createTags = (...tags) => {
 }
 
 let $tags = createTags(
-    'div', 'h1', 'h2', 'p', 'main', 
-    'article', 'button', 'span', 'canvas',
+    'div', 'h1', 'h2', 'p', 'main', 'input', 'label', 'select', 'option',
+    'article', 'button', 'span', 'canvas', 'img', 'pre',
     'table', 'thead', 'tbody', 'th', 'tr', 'td'
 )
 
@@ -25,62 +33,315 @@ let $howItWorks = $(() => {
     );
 })
 
-let $loadImage = $(() => {
+let $portalModal = $(({ shown, title, children, $close, $continue }) => {
+    return (
+        $reactPortal({ wrapperId: 'portal-root' },
+            shown && $tags.div({ className: 'modal--dim' },
+                $tags.div({ className: 'modal--window' },
+                    $tags.div({ className: 'modal--header' },
+                        title
+                    ),
+                    $tags.div({ className: 'modal--content' },
+                        children,
+                    ),
+                    $tags.div({ className: 'modal--footer' },
+                        $tags.button({ className: 'modal--button', onClick: $close },
+                            'Close'
+                        ),
+                        $continue && $tags.button({ className: 'modal--button --primary', onClick: $continue },
+                            'Continue'
+                        )
+                    ),
+                )
+            )
+        )
+    )
+})
+
+let $loadImage = $(({ $image }) => {
+    let [file, $file] = useState()
+
+    let [url, $url] = useState()
+
+    let $urlChange = (e) => {
+        $url(e.target.value)
+    }
+
+    let [modalShown, $modalShown] = useState(false)
+
+    let $modalClose = () => {
+        $modalShown(false)
+    }
+
+    let $modalContinue = () => {
+        $image(url)
+        $url('')
+        $modalShown(false)
+    }
+
+    let $fromPC = (e) => {
+        if (e.target.files) {
+            let loadedFile = e.target.files[0]
+            $file(loadedFile)
+            let reader = new FileReader()
+            reader.onload = ee => $image(ee.target.result)
+            reader.readAsDataURL(loadedFile)
+        }
+    }
+
+    let $fromWebsite = () => {
+        $modalShown(true)
+    }
+
     return $tags.main({},
-        $tags.button({ id: 'from-PC' },
-            'Select image from my PC'
+        $tags.div({ className: 'from-PC--wrapper' },
+            $tags.input({ 
+                type: 'file',
+                id: 'from-PC--input',
+                onChange: $fromPC,
+            }),
+            $tags.label({ id: 'from-PC--label', htmlFor: 'from-PC--input' },
+                'Select image from my PC'
+            ),
         ),
         $tags.span({},
             '-- OR --'
         ),
-        $tags.button({ id: 'from-website' },
+        $tags.button({ id: 'from-website', onClick: $fromWebsite },
             'Load image from website'
+        ),
+        $portalModal({ 
+            shown: modalShown,
+            title: 'Load Image from Website',
+            $close: $modalClose,
+            $continue: $modalContinue,
+        },
+            $tags.input({ value: url, onChange: $urlChange })
+        )
+    )
+})
+
+let $dataRow = $(({ rowIndex, row, $row, children }) => {
+    let $value = (propName) => (newValue) => {
+        let newRow = {...row}
+        newRow[propName] = newValue
+        $row(newRow)
+    }
+
+    return $tags.tr({ key: rowIndex },
+        children.map((C, CInd) => $tags.td({ key: CInd },
+            C.props.children({
+                rowIndex,
+                value: row[C.props.propName],
+                $value: $value(C.props.propName),
+            })
+        ))
+    )
+})
+
+let $dataColumn = $(({ children, title, project }) => {
+    return $tags.div({})
+})
+
+let $dataTable = $(({ children, data, $data }) => {
+    let $row = (index) => (newRow) => {
+        let newData = [...data]
+        newData.splice(index, 1, newRow)
+        $data(newData)
+    }
+
+    return $tags.table({},
+        $tags.thead({},
+            $tags.tr({},
+                children.map((C, CInd) => $tags.th({ key: CInd },
+                    C.props.title
+                ))
+            )
+        ),
+        $tags.tbody({},
+            data.map((R, RInd) => $dataRow({
+                key: RInd,
+                children,
+                row: R,
+                $row: $row(RInd),
+                rowIndex: RInd,
+            }))
         ),
     )
 })
 
-let $areaTable = $(() => {
+let $areaTable = $(({ areas, $areas }) => {
+    let $addArea = () => {
+        $areas([...areas, {
+            isActive: false,
+            shape: 'circle',
+            link: '',
+            title: '',
+            target: '',
+        }])
+    }
+
+    let $removeArea = (index) => () => {
+        let newAreas = [...areas]
+        newAreas.splice(index, 1)
+        $areas(newAreas)
+    }
+
     return $tags.div({ id: 'area-table' },
-        $tags.table({},
-            $tags.thead({},
-                $tags.tr({},
-                    $tags.th({},
-                        'Active'
-                    ),
-                    $tags.th({},
-                        'Shape'
-                    ),
-                    $tags.th({},
-                        'Link'
-                    ),
-                    $tags.th({},
-                        'Title'
-                    ),
-                    $tags.th({},
-                        'Target'
-                    ),
-                    $tags.th({},
-                        ''
-                    ),
-                )
+        $dataTable({ data: areas, $data: $areas },
+            $dataColumn({
+                title: 'Active',
+                propName: 'isActive',
+            },
+                ({ value, $value }) => {
+                    let onChange = (e) => {
+                        $value(e.target.value)
+                    }
+
+                    return $tags.input({ type: 'radio', value, onChange })
+                }
             ),
-            $tags.tbody({},
-                
-            )            
+            $dataColumn({
+                title: 'Shape',
+                propName: 'shape',
+            },
+                ({ value, $value }) => {
+                    let onChange = (e) => {
+                        $value(e.target.value)
+                    }
+
+                    return $tags.select({ value, onChange },
+                        $tags.option({value: null},
+                            '---'
+                        ),
+                        $tags.option({value: 'rectangle'},
+                            'Rectangle'
+                        ),
+                        $tags.option({value: 'polygon'},
+                            'Polygon'
+                        ),
+                        $tags.option({value: 'circle'},
+                            'Circle'
+                        ),
+                    )
+                }
+            ),
+            $dataColumn({
+                title: 'Link',
+                propName: 'link',
+            },
+                ({ value, $value }) => {
+                    let onChange = (e) => {
+                        $value(e.target.value)
+                    }
+
+                    return $tags.input({ type: 'text', value, onChange })
+                }
+            ),
+            $dataColumn({
+                    title: 'Title',
+                    propName: 'title',
+                }, 
+                ({ value, $value }) => {
+                    let onChange = (e) => {
+                        $value(e.target.value)
+                    }
+
+                    return $tags.input({ type: 'text', value, onChange })
+                }
+            ),
+            $dataColumn({
+                    title: 'Target',
+                    propName: 'target',
+                },
+                ({ value, $value }) => {
+                    let onChange = (e) => {
+                        $value(e.target.value)
+                    }
+
+                    return $tags.select({ value, onChange },
+                        $tags.option({value: null},
+                            '---'
+                        ),
+                        $tags.option({value: '_blank'},
+                            '_blank'
+                        ),
+                        $tags.option({value: '_parent'},
+                            '_parent'
+                        ),
+                        $tags.option({value: '_self'},
+                            '_self'
+                        ),
+                        $tags.option({value: '_top'},
+                            '_top'
+                        ),
+                    )
+                }
+            ),
+            $dataColumn({
+                    title: '',
+                }, 
+                ({ rowIndex }) => {
+                    return $tags.button({ className: 'remove-area', onClick: $removeArea(rowIndex) },
+                        'Remove area'
+                    )
+                }),
         ),
-        $tags.button({ id: 'add-area'},
+        $tags.button({ id: 'add-area', onClick: $addArea },
             'Add new area'
         )
     )
 })
 
-let $areaEditor = $(() => {
-    return $tags.div({ id: 'area-editor' },
-        $tags.canvas(),
-        $areaTable(),
-        $tags.button({ id: 'show-code' },
-            'Show me the code!'
+let $showCode = $(({ areas }) => {
+    let [modalShown, $modalShown] = useState(false)
+
+    let $modalOpen = () => {
+        $modalShown(true)
+    }
+
+    let $modalClose = () => {
+        $modalShown(false)
+    }
+
+    return $tags.div({},
+        $tags.button({ 
+            id: 'show-code',
+            onClick: $modalOpen 
+        },
+            'Show me the code!',
         ),
+        $portalModal({ 
+            shown: modalShown,
+            title: 'Generated Image Map Output',
+            $close: $modalClose,
+        },
+            $tags.pre({ className: 'code-output' },
+                '<!-- Image Map Generated by http://www.image-map.net/ -->\n' +
+                '<img src="images.jpeg" usemap="#image-map">\n' +
+        
+                '<map name="image-map">\n\t' +
+                    areas.map((A) => '<area ' + 
+                        `target="${A.target}" ` +
+                        `alt="" ` +
+                        `title="${A.title}" ` +
+                        `href="${A.link}" ` +
+                        `coords="" ` +
+                        `shape="${A.shape}">`
+                    ).join('\n\t')
+                + '\n</map>'
+            )
+        )
+    )
+})
+
+let $areaEditor = $(({ image }) => {
+    let [areas, $areas] = useState([])
+
+    return $tags.div({ id: 'area-editor', className: image != '' ? '--shown' : '' },
+        image && $tags.img({ className: 'canvas', src: image }),
+        $areaTable({ areas, $areas }),
+        $showCode({ areas }),
     )
 })
 
@@ -95,10 +356,10 @@ let $articleGroup = $(() => {
     return $tags.div({ className: 'article-group' },
         $article({ title: 'What is an Image Map?' },
             $tags.p({},
-                'Originally introduced in HTML 3.2 as a replacement for server side imagemaps. Server side image maps were clunky requiring a round trip to the web server to determine where to go based on the coordinates clicked in the image. Thus client side image-maps were born!'
+                'Client-side image maps were initially introduced to replace server side ones. This type of map required a round trip to the web server in order for the program to determine where an image was being displayed based on coordinates input by the user. Thus, client-side image maps were born!'
             ),
             $tags.p({},
-                'An imagemap is a graphic image where a user can click on different parts of the image and be directed to different destinations. imagemaps are made by defining each of the hot areas in terms of their x and y coordinates (relative to the top left hand corner). With each set of coordinates, you specify a link that users will be directed to when they click within the area.'
+                'An image map is a graphic representation where users can click on different parts of the image to navigate to different destinations. Image maps are created by defining each of the hot areas in terms of their x and y coordinates (relative to the top left corner). With each set of coordinates, you specify a link that users will be directed to when they click within the area.'
             ),
             $tags.p({},
                 'As an example, say you have a map of the World that you wish to act as an image map. Each country could have their hot areas defined on the map to take you to different pages.'
@@ -106,20 +367,22 @@ let $articleGroup = $(() => {
         ),
         $article({ title: 'About' },
             $tags.p({},
-                'We make it extremely easy to create free HTML based image maps. Our tool was build from the ground up with the modern browsers in mind, and sadly in turn doesn\'t support older browsers (sorry IE8 and lower!). All operations are completely client side in your browser using the power of HTML5, SVG and JavaScript.'
+                'Our free HTML-based image map tool is designed for modern browsers, and unfortunately it doesn\'t work with older versions of Internet Explorer. All operations are performed on the client side using HTML5, SVG and JavaScript—making this an ideal solution for web designers who want to create responsive images maps without any headaches.'
             ),
             $tags.p({},
-                'Disclaimer: No image from your PC are ever transferred out of your browser. All files loaded from your PC are read using the FileReader JavaScript API directly off your hard drive in to your browser.'
+                ' Note: Images loaded from your computer are not sent to any third-party servers - they are read directly off of your hard drive into your browser using the FileReader JavaScript API.'
             ),            
         )        
     )
 })
 
 let $app = $(() => {
+    let [image, $image] = useState('')
+
     return $tags.div({ className: 'content' },
         $howItWorks(),
-        $loadImage(),
-        $areaEditor(),
+        $loadImage({$image}),
+        $areaEditor({image}),
         $articleGroup(),
     )
 })
