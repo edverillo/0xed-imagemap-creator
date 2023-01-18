@@ -110,6 +110,10 @@ footer {
 	margin: 0 auto;
 }
 
+.canvas img {
+	pointer-events: none;
+}
+
 #area-table {
 	margin-top: 15px;
 }

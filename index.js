@@ -1,17 +1,27 @@
 let useState = React.useState
+let useMemo = React.useMemo
 
 let $ = (component) => (...args) => React.createElement(component, ...args)
+
+let getMouseCoordsOnTarget = (e) => {
+    let currentTargetRect = e.target.getBoundingClientRect();
+    return [
+        e.pageX - currentTargetRect.left,
+        e.pageY - currentTargetRect.top
+    ];
+}
+
 
 let prop = propName => obj => obj[propName]
 
 let $reactPortal = $(({ children, wrapperId }) => {
-    return ReactDOM.createPortal(children, document.getElementById(wrapperId));
+    return ReactDOM.createPortal(children, document.getElementById(wrapperId))
 })
 
 let createTags = (...tags) => {
     let result = {}
     for(let tag of tags) {
-        result[tag] = $(tag);
+        result[tag] = $(tag)
     }
     return result
 }
@@ -30,7 +40,7 @@ let $howItWorks = $(() => {
         $tags.p({},
             'With the help of our generator creating html imagemaps is free and easy. Simply start by selecting an image from your pc, or load one directly from an external website. Next up create your hot areas using either rectangle, circle or polygon shapes. Creating these shapes is as easy as pointing and clicking on your image. Don\'t forget to enter a link, title and target for each of them. Then once you\'re finished simply click Show Me The Code!'
         ),
-    );
+    )
 })
 
 let $portalModal = $(({ shown, title, children, $close, $continue }) => {
@@ -146,7 +156,7 @@ let $dataColumn = $(({ children, title, project }) => {
 let $dataTable = $(({ children, data, $data }) => {
     let $row = (index) => (newRow) => {
         let newData = [...data]
-        newData.splice(index, 1, newRow)
+        newData[index] = newRow
         $data(newData)
     }
 
@@ -170,7 +180,75 @@ let $dataTable = $(({ children, data, $data }) => {
     )
 })
 
-let $areaTable = $(({ areas, $areas }) => {
+let $figureEditor = $(({ image, activeIndex, activeArea, $activeArea }) => {
+    let activeArea = useMemo(() => areas[activeIndex], [areas, activeIndex])
+
+    let $activeArea = (newArea) => {
+        let newAreas = [...areas]
+        newAreas[activeIndex] = newArea
+        $areas(newAreas)
+    }
+
+    let $preventDefault = (e) => {
+        e.preventDefault()
+    }
+
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    let addOrHoldPoint = (targetX, targetY) => {
+        let newActiveArea = { ...activeArea }
+        console.log(targetX, targetY)
+    }
+
+    let removePoint = (targetX, targetY) => {
+        
+    }
+
+    let releasePoint = (targetX, targetY) => {
+        
+    }
+
+    let movePoint = (targetX, targetY) => {
+        
+    }
+
+    let $mouseDown = (e) => {
+        let [targetX, targetY] = getMouseCoordsOnTarget(e)
+
+        e.preventDefault()
+        if (e.button === 0) {
+            addOrHoldPoint(targetX, targetY)
+        }
+        if (e.button === 2) {
+            removePoint(targetX, targetY)
+        }        
+    }
+
+    let $mouseUp = (e) => {
+        let [targetX, targetY] = getMouseCoordsOnTarget(e)
+        releasePoint(targetX, targetY)
+    }
+
+    let $mouseMove = (e) => {
+        let [targetX, targetY] = getMouseCoordsOnTarget(e)
+        movePoint(targetX, targetY)
+    }
+
+    return image && $tags.div({
+        className: 'canvas',
+        onDragStart: $preventDefault,
+        onContextMenu: $preventDefault,
+        onMouseDown: $mouseDown,
+        onMouseUp: $mouseUp,
+        onMouseMove: $mouseMove,
+    },
+        $tags.img({src: image }),
+
+
+    )
+})
+
+let $areaTable = $(({ areas, $areas, $activeIndex }) => {
     let $addArea = () => {
         $areas([...areas, {
             isActive: false,
@@ -178,6 +256,7 @@ let $areaTable = $(({ areas, $areas }) => {
             link: '',
             title: '',
             target: '',
+            points: []
         }])
     }
 
@@ -193,12 +272,12 @@ let $areaTable = $(({ areas, $areas }) => {
                 title: 'Active',
                 propName: 'isActive',
             },
-                ({ value, $value }) => {
+                ({ rowIndex }) => {
                     let onChange = (e) => {
-                        $value(e.target.value)
+                        $activeIndex(e.target.value)
                     }
 
-                    return $tags.input({ type: 'radio', value, onChange })
+                    return $tags.input({ type: 'radio', name: 'isActive', value: rowIndex, onChange })
                 }
             ),
             $dataColumn({
@@ -336,11 +415,12 @@ let $showCode = $(({ areas }) => {
 })
 
 let $areaEditor = $(({ image }) => {
+    let [activeIndex, $activeIndex] = useState(-1)
     let [areas, $areas] = useState([])
 
     return $tags.div({ id: 'area-editor', className: image != '' ? '--shown' : '' },
-        image && $tags.img({ className: 'canvas', src: image }),
-        $areaTable({ areas, $areas }),
+        $figureEditor({ areas, $areas, activeIndex, image }),
+        $areaTable({ areas, $areas, $activeIndex }),
         $showCode({ areas }),
     )
 })
